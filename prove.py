@@ -50,7 +50,7 @@ def main():
     greedy = a.temperature is None or a.greedy
     proofs = batched_generate(
         model, tk, prompts, device,
-        max_new_tokens=80,
+        max_new_tokens=176,   # longest gold body is 154 tokens; 80 truncated long proofs
         greedy=greedy,
         temperature=(a.temperature or 0.0),
         seed=a.seed,

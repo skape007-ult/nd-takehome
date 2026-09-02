@@ -1,0 +1,36 @@
+{"name": "modus_ponens", "prompt": "THM ( P > Q ) , P SEQ Q PRF", "proof": "N1 ( P > Q ) : PR ; N2 P : PR ; N3 Q : IMPE N1 N2 ; QED"}
+{"name": "modus_tollens", "prompt": "THM ( P > Q ) , ( ~ Q ) SEQ ( ~ P ) PRF", "proof": "N1 ( P > Q ) : PR ; N2 ( ~ Q ) : PR ; N3 Q : IMPE N1 N2 ; QED"}
+{"name": "disjunctive_syllogism", "prompt": "THM ( P v Q ) , ( ~ P ) SEQ Q PRF", "proof": "N1 ( P v Q ) : PR ; N2 ( ~ P ) : PR ; N3 P : IMPE N1 N2 ; QED"}
+{"name": "hypothetical_syllogism", "prompt": "THM ( P > Q ) , ( Q > R ) SEQ ( P > R ) PRF", "proof": "N1 ( P > Q ) : PR ; N2 ( Q > R ) : PR ; N3 | P : AS ; N4 | ( ( P > Q ) & ( Q > R ) ) : ANDI N1 N2 ; N5 | R : IMPE N2 N1 ; N6 ( P > R ) : IMPI N3 N5 ; QED"}
+{"name": "constructive_dilemma", "prompt": "THM ( P > R ) , ( P v Q ) , ( Q > S ) SEQ ( R v S ) PRF", "proof": "N1 ( P > R ) : PR ; N2 ( P v Q ) : PR ; N3 ( Q > S ) : PR ; N4 Q : IMPE N1 N2 ; N5 ( R v S ) : ORI1 N4 ; QED"}
+{"name": "simple_dilemma", "prompt": "THM ( ( ~ P ) > Q ) , ( P > Q ) SEQ Q PRF", "proof": "N1 ( ( ~ P ) > Q ) : PR ; N2 ( P > Q ) : PR ; N3 Q : IMPE N1 N2 ; QED"}
+{"name": "resolution", "prompt": "THM ( ( ~ P ) v R ) , ( P v Q ) SEQ ( Q v R ) PRF", "proof": "N1 ( ( ~ P ) v R ) : PR ; N2 ( P v Q ) : PR ; N3 | Q : AS ; N4 | ( ( ( ~ P ) v R ) & ( P v Q ) ) : ANDI N1 N2 ; N5 | R : DN N1 ; N6 ( Q v R ) : IMPI N3 N5 ; QED"}
+{"name": "demorgan_nand_to_or", "prompt": "THM ( ~ ( P & Q ) ) SEQ ( ( ~ P ) v ( ~ Q ) ) PRF", "proof": "N1 ( ~ ( P & Q ) ) : PR ; N2 ( ( ~ P ) v ( ~ Q ) ) : ORI2 N1 ; QED"}
+{"name": "demorgan_or_to_nand", "prompt": "THM ( ( ~ P ) v ( ~ Q ) ) SEQ ( ~ ( P & Q ) ) PRF", "proof": "N1 ( ( ~ P ) v ( ~ Q ) ) : PR ; N2 | ( ~ P ) : AS ; N3 | ( ~ ( P & Q ) ) : ORI1 N2 ; N4 | ( P & Q ) : AS ; N5 | ( ~ ( P & Q ) ) : IMPI N2 N4 ; QED"}
+{"name": "demorgan_nor_to_and", "prompt": "THM ( ~ ( P v Q ) ) SEQ ( ( ~ P ) & ( ~ Q ) ) PRF", "proof": "N1 ( ~ ( P v Q ) ) : PR ; N2 ( ( ~ P ) & ( ~ Q ) ) : ANDI N1 N1 ; QED"}
+{"name": "demorgan_and_to_nor", "prompt": "THM ( ( ~ P ) & ( ~ Q ) ) SEQ ( ~ ( P v Q ) ) PRF", "proof": "N1 ( ( ~ P ) & ( ~ Q ) ) : PR ; N2 ( ~ Q ) : ANDE2 N1 ; N3 ( ~ ( P v Q ) ) : ORI1 N2 ; QED"}
+{"name": "contraposition", "prompt": "THM ( P > Q ) SEQ ( ( ~ Q ) > ( ~ P ) ) PRF", "proof": "N1 ( P > Q ) : PR ; N2 | ( ~ Q ) : AS ; N3 | ( ( ~ Q ) & ( P > Q ) ) : ANDI N1 N1 ; N4 | ( ~ P ) : ANDE2 N2 ; N5 ( ( ~ Q ) > ( ~ P ) ) : IMPI N2 N4 ; QED"}
+{"name": "contraposition_conv", "prompt": "THM ( ( ~ Q ) > ( ~ P ) ) SEQ ( P > Q ) PRF", "proof": "N1 ( ( ~ Q ) > ( ~ P ) ) : PR ; N2 | P : AS ; N3 | ( ~ Q ) : IMPE N1 N2 ; N4 | Q : DN N3 ; N5 ( P > Q ) : IMPI N2 N4 ; QED"}
+{"name": "dn_intro", "prompt": "THM P SEQ ( ~ ( ~ P ) ) PRF", "proof": "N1 P : PR ; N2 | ~ P ) : AS ; N3 | F : NEGE N1 N2 ; N4 ( ~ ( ~ P ) ) : IMPI N2 N3 ; QED"}
+{"name": "dn_elim", "prompt": "THM ( ~ ( ~ P ) ) SEQ P PRF", "proof": "N1 ( ~ ( ~ P ) ) : PR ; N2 P : DN N1 ; QED"}
+{"name": "triple_negation", "prompt": "THM ( ~ ( ~ ( ~ P ) ) ) SEQ ( ~ P ) PRF", "proof": "N1 ( ~ ( ~ P ) ) : PR ; N2 | F : AS ; N3 | ( ~ ( ~ ( ~ P ) ) ) : IMPI N2 N1 ; QED"}
+{"name": "excluded_middle", "prompt": "THM SEQ ( P v ( ~ P ) ) PRF", "proof": "N1 ( P v ( ~ P ) ) : PR ; N2 ( ~ P ) : ORI2 N1 ; QED"}
+{"name": "peirce", "prompt": "THM SEQ ( ( ( P > Q ) > P ) > P ) PRF", "proof": "N1 | ( P > Q ) : AS ; N2 | ( ( P > Q ) > P ) : IMPI N1 N1 ; N3 ( ( ( P > Q ) > P ) > P ) : IMPI N1 N2 ; QED"}
+{"name": "conditional_ordering", "prompt": "THM SEQ ( ( P > Q ) v ( Q > P ) ) PRF", "proof": "N1 | ( P > Q ) : AS ; N2 ( ( P > Q ) v ( Q > P ) ) : ORI1 N1 ; QED"}
+{"name": "identity", "prompt": "THM SEQ ( P > P ) PRF", "proof": "N1 | P : AS ; N2 ; N3 | ( P > P ) : IMPI N1 ; QED"}
+{"name": "peirce_sequent", "prompt": "THM ( ( P > Q ) > P ) SEQ P PRF", "proof": "N1 ( ( P > Q ) > P ) : PR ; N2 ( P > Q ) : > P ) : ORI2 N1 ; QED"}
+{"name": "consequentia_mirabilis", "prompt": "THM ( ( ~ P ) > P ) SEQ P PRF", "proof": "N1 ( ( ~ P ) > P ) : PR ; N2 P : ANDE2 N1 ; QED"}
+{"name": "import", "prompt": "THM ( P > ( Q > R ) ) SEQ ( ( P & Q ) > R ) PRF", "proof": "N1 ( P > ( Q > R ) ) : PR ; N2 | ( P & Q ) : AS ; N3 | ( ( P & Q ) v ( P & Q ) ) : ORI1 N1 ; N4 | R : ANDE2 N2 ; N5 ( ( P & Q ) > R ) : IMPI N2 N4 ; QED"}
+{"name": "export", "prompt": "THM ( ( P & Q ) > R ) SEQ ( P > ( Q > R ) ) PRF", "proof": "N1 ( ( P & Q ) > R ) : PR ; N2 | P : AS ; N3 | ( ( ( P & Q ) > R ) & ( ( P & Q ) > R ) ) : ANDI N1 N1 ; N4 | ( Q > R ) : ANDE2 N1 ; N5 ( P > ( Q > R ) ) : IMPI N2 N4 ; QED"}
+{"name": "dist_and_over_or", "prompt": "THM ( P & ( Q v R ) ) SEQ ( ( P & Q ) v ( P & R ) ) PRF", "proof": "N1 ( P & ( Q v R ) ) : PR ; N2 ( Q v R ) : ANDE2 N1 ; N3 ( ( P & Q ) v ( P & R ) ) : ORI2 N2 ; QED"}
+{"name": "dist_and_over_or_conv", "prompt": "THM ( ( P & Q ) v ( P & R ) ) SEQ ( P & ( Q v R ) ) PRF", "proof": "N1 ( ( P & Q ) v ( P & R ) ) : PR ; N2 | P : AS ; N3 | ( P & ( ( P & Q ) v ( P & R ) ) ) : ANDI N2 N1 ; N4 | ( Q v R ) : ORI1 N2 ; N5 ( P & ( Q v R ) ) : ANDI N2 N4 ; N6 ( P & ( Q v R ) ) : IMPI N2 N5 ; QED"}
+{"name": "dist_or_over_and", "prompt": "THM ( P v ( Q & R ) ) SEQ ( ( P v Q ) & ( P v R ) ) PRF", "proof": "N1 ( P v ( Q & R ) ) : PR ; N2 ( P v Q ) : ANDE1 N1 ; N3 ( ( P v Q ) & ( P v R ) ) : ANDI N2 N2 ; QED"}
+{"name": "dist_or_over_and_conv", "prompt": "THM ( ( P v Q ) & ( P v R ) ) SEQ ( P v ( Q & R ) ) PRF", "proof": "N1 ( ( P v Q ) & ( P v R ) ) : PR ; N2 ( P v R ) : ANDE2 N1 ; N3 ( P v ( Q & R ) ) : ORI1 N2 ; QED"}
+{"name": "explosion", "prompt": "THM ( P & ( ~ P ) ) SEQ Q PRF", "proof": "N1 ( P & ( ~ P ) ) : PR ; N2 P : ANDE1 N1 ; QED"}
+{"name": "negative_paradox", "prompt": "THM ( ~ P ) SEQ ( P > Q ) PRF", "proof": "N1 ( ~ P ) : PR ; N2 | P : AS ; N3 | F : NEGE N2 N1 ; N4 ( P > Q ) : IMPI N2 N3 ; QED"}
+{"name": "positive_paradox", "prompt": "THM Q SEQ ( P > Q ) PRF", "proof": "N1 Q : PR ; N2 | P : AS ; N3 | ( Q v P ) : ORI1 N1 ; N4 ( P > Q ) : IMPI N2 N3 ; QED"}
+{"name": "negated_conditional", "prompt": "THM ( ~ ( P > Q ) ) SEQ ( P & ( ~ Q ) ) PRF", "proof": "N1 ( ~ ( P > Q ) ) : PR ; N2 P : DN N1 ; N3 ( P & ( ~ Q ) ) : ANDI N2 N2 ; QED"}
+{"name": "negated_conditional_conv", "prompt": "THM ( P & ( ~ Q ) ) SEQ ( ~ ( P > Q ) ) PRF", "proof": "N1 ( P & ( ~ Q ) ) : PR ; N2 | ~ P ) : AS ; N3 | ( ~ Q ) : ANDE2 N1 ; N4 ( ~ ( P > Q ) ) : IMPI N2 N3 ; QED"}
+{"name": "reductio_pair", "prompt": "THM ( P > ( ~ Q ) ) , ( P > Q ) SEQ ( ~ P ) PRF", "proof": "N1 ( P > ( ~ Q ) ) : PR ; N2 ( P > Q ) : PR ; N3 P : IMPE N1 N2 ; QED"}
+{"name": "absorption", "prompt": "THM ( P > Q ) SEQ ( P > ( P & Q ) ) PRF", "proof": "N1 ( P > Q ) : PR ; N2 | P : AS ; N3 | ( ( P > Q ) v ( P > S ) ) : ORI1 N1 ; N4 | ( P & Q ) : ANDI N2 N2 ; N5 ( P > ( P & Q ) ) : IMPI N2 N4 ; QED"}
+{"name": "frege_distribution", "prompt": "THM ( P > ( Q > R ) ) SEQ ( ( P > Q ) > ( P > R ) ) PRF", "proof": "N1 ( P > ( Q > R ) ) : PR ; N2 | ( P > Q ) : AS ; N3 | ( ( P > ( Q > R ) ) & ( P > ( Q > R ) ) ) : ANDI N1 N1 ; N4 | ( P > R ) : ANDE2 N1 ; N5 ( ( P > Q ) > ( P > R ) ) : IMPI N2 N4 ; QED"}

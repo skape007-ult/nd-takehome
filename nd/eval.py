@@ -40,7 +40,7 @@ def _proof_body(text):
 
 
 @torch.no_grad()
-def batched_generate(model, tk, prompts, device, max_new_tokens=80,
+def batched_generate(model, tk, prompts, device, max_new_tokens=176,
                      greedy=True, temperature=0.0, seed=0, batch_size=256):
     """Return a list of proof-body strings, one per prompt, in input order."""
     model.eval()
@@ -75,7 +75,7 @@ def batched_generate(model, tk, prompts, device, max_new_tokens=80,
 
 
 def solve_rate(model, tk, records, device, greedy=True, temperature=0.0,
-               seed=0, max_new_tokens=80, batch_size=256):
+               seed=0, max_new_tokens=176, batch_size=256):
     """records: list of dicts with 'prompt' and (optional) 'n_lines'.
     Returns dict with overall + per-reference-length solve stats."""
     prompts = [r['prompt'] for r in records]

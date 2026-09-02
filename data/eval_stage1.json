@@ -1,0 +1,68 @@
+{
+  "mode": "greedy",
+  "ckpt_step": 4000,
+  "overall": {
+    "n": 8622,
+    "solved": 7493,
+    "rate": 0.8690559035026676,
+    "lo": 0.8617705920848793,
+    "hi": 0.8760124898581048
+  },
+  "per_length": {
+    "2": {
+      "k": 1320,
+      "n": 1344,
+      "rate": 0.9821428571428571,
+      "lo": 0.9735661781561308,
+      "hi": 0.9879711419562621
+    },
+    "3": {
+      "k": 2795,
+      "n": 2890,
+      "rate": 0.967128027681661,
+      "lo": 0.9599819695777263,
+      "hi": 0.9730338527119251
+    },
+    "4": {
+      "k": 2305,
+      "n": 2709,
+      "rate": 0.8508674787744556,
+      "lo": 0.8369565972241552,
+      "hi": 0.8637846476756578
+    },
+    "5": {
+      "k": 821,
+      "n": 1258,
+      "rate": 0.6526232114467408,
+      "lo": 0.6258829242208831,
+      "hi": 0.6784341945046367
+    },
+    "6": {
+      "k": 252,
+      "n": 421,
+      "rate": 0.5985748218527316,
+      "lo": 0.551062263543832,
+      "hi": 0.6443046685080198
+    }
+  },
+  "P_ci": 3,
+  "P_point": 4,
+  "target": 0.85,
+  "failure_reasons": {
+    "rule check failed: ANDI": 529,
+    "rule check failed: ORI1": 206,
+    "rule check failed: ORI2": 134,
+    "rule check failed: ANDE1": 91,
+    "final formula is not the conclusion": 48,
+    "rule check failed: IMPI": 45,
+    "rule check failed: ANDE2": 44,
+    "rule check failed: IMPE": 17,
+    "rule check failed: NEGE": 5,
+    "rule check failed: DN": 3,
+    "premise block does not match declared premises": 3,
+    "wrong ref count for IMPI": 1,
+    "wrong ref count for IMPE": 1,
+    "rule check failed: ORE": 1,
+    "parse: missing binop": 1
+  }
+}

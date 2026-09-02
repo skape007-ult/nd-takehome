@@ -29,17 +29,30 @@ check 4s (CPU, macOS arm64). All numbers below from `data/stats.json`.
 ## Model / training
 | number | value | source | notes |
 |---|---|---|---|
-| params | TBD (~3.3M target) | `nd/model.py` printout | 4 layers, d=256 |
-| train steps / batch | TBD | `nd/train.py` args | |
-| wall-clock, hardware | TBD | training log | device recorded |
+| params | 3.251M | `nd/model.py` printout | 4 layers, d=256, 8 heads, tied head |
+| train steps / batch | 4000 / 128 | `nd/train.py` --seed 0 | AdamW, warmup 200 + cosine |
+| wall-clock, hardware | 65 min | Apple M-series MPS | ~0.75s/step |
+| block size / decode budget | 256 / 176 | | 176 covers longest gold body (154) |
 
-## Evaluation (Stage 1)
+## Evaluation (Stage 1) — greedy, ckpt/stage1.pt, `scripts/eval_stage1.py`
 | number | value | source | notes |
 |---|---|---|---|
-| greedy held-out solve rate | TBD | `nd/eval.py` | Wilson CI |
-| solve rate by length 2..6 | TBD | `figures/solve_by_length.png` | Wilson CIs |
-| P (max length solved, pre-train) | TBD | `nd/eval.py` | at chosen accuracy |
-| top failure reasons | TBD | `verify_cli.py --reasons` | |
+| greedy held-out solve rate | 0.869 (7493/8622) | `data/eval_stage1.json` | 95% CI [0.862, 0.876]; verify_cli agrees |
+| solve rate len 2 | 0.982 (1320/1344) | eval_stage1.json | [0.974, 0.988] |
+| solve rate len 3 | 0.967 (2795/2890) | eval_stage1.json | [0.960, 0.973] |
+| solve rate len 4 | 0.851 (2305/2709) | eval_stage1.json | [0.837, 0.864] |
+| solve rate len 5 | 0.653 (821/1258) | eval_stage1.json | [0.626, 0.678] |
+| solve rate len 6 | 0.599 (252/421) | eval_stage1.json | [0.551, 0.644] |
+| **P (pre-train frontier, target 85%)** | **4 point / 3 Wilson-LB** | eval_stage1.json | len-4 LB 0.837 just under 0.85 |
+| solve-by-length figure | — | `figures/solve_by_length.png` | with Wilson CIs |
+| top failure reasons | ANDI 529, ORI1 206, ORI2 134 | verify_cli --reasons | all semantic (no truncation) |
+
+## Evaluation — validation_36 cross-check (eval only, never trained on)
+| number | value | source | notes |
+|---|---|---|---|
+| overall | 2/36 = 0.056 | `eval_targets.py --by min_lines_ub` | 24/36 need >6 lines (OOD by L=6 cap) |
+| **≤6 bin** | **2/12 = 0.167** | eval_targets.py | in-dist 0.869 vs curated 0.167 = coverage gap |
+| barrier | R=0, NEGI=8, ... | `data/stats.json` rule_hist | generator starves goal-directed rules |
 
 ## Stage 2 (stretch, only if attempted)
 | number | value | source | notes |

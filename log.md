@@ -71,6 +71,79 @@ Honest, dated, in-order. Dead ends included on purpose.
   emitted-vs-effective. Padding audit clearly shows emitted-5/6 proofs are mostly
   effective-2/4 in the raw pool → justifies pruning.
 
-<!-- next: tokenizer, then model (4L d=256 ~3.3M) + training (needs torch/MPS) -->
+### Tokenizer (`nd/tokenizer.py`)
+- Fixed whitespace vocab, one id per surface symbol, atomic N1..N64. 101 tokens.
+- Round-trip check over all 71,892 dataset examples: 0 mismatches. Max sequence
+  length 193 (< block_size 256). All target prompts (validation_36, test_short,
+  test_long) encode with no unknown tokens.
+
+### Model (`nd/model.py`)
+- Pre-norm GPT, 4 layers, d=256, 8 heads, weight-tied head. 3.251M params
+  (reference ~3.3M). Forward + generate (greedy/sampled, per-row QED/EOS stop).
+
+### Training (`nd/train.py`) + perf investigation
+- Prompt-masked next-token loss (only the proof body + EOS is scored), AdamW,
+  warmup 200 + cosine, periodic greedy held-out probe, saves best checkpoint.
+- Perf dead-end + fix: first MPS run showed 1.47s/step. Cause = per-step
+  `loss.item()` forcing a GPU sync every step. Fixed: accumulate loss on-device,
+  sync once per 100 steps. Benchmark (40 steps, proper mps.synchronize):
+  CPU 2.09s/step vs MPS 0.53s/step → MPS wins clearly for this tiny model once
+  the sync is gone. 4000 steps ≈ 35 min on this M-series.
+- Launched full run: steps 4000, batch 128, seed 0.
+
+### Diagnostic @ step 500 (loss 0.54, greedy held-out solve 0.1%)
+- Low loss but ~0% solve looked alarming — checked whether eval was buggy. It is
+  NOT: inspecting raw greedy output shows well-formed proofs. The failures are
+  semantic, and systematic:
+  - "premise block does not match declared premises": the model does not yet copy
+    the premise formulas verbatim into the PR lines (it paraphrases/hallucinates a
+    simpler premise).
+  - "final formula is not the conclusion": it writes a plausible forward proof but
+    doesn't steer to the exact requested conclusion.
+- Both are the in-context copy/align capability (induction heads) that typically
+  emerges as a phase transition, consistent with loss still being high. The
+  reference model is this exact size and the brief targets ≥85%, so the working
+  hypothesis is undertraining, not a design flaw. Decision: watch the 1000/1500
+  probes before any intervention rather than tuning blind.
+
+### Training trajectory (phase transition confirmed)
+- Greedy held-out probe (1k subset, decode budget 80): 500→0.1%, 1000→36.9%,
+  1500→54.9%, 2000→65.6%, 2500→72.8%, 3000→74.8%, 3500→78.9%, 4000→80.6%.
+  Undertraining hypothesis confirmed; still climbing at 4000. 65 min on MPS.
+
+### Decode-budget barrier (fixed)
+- First full eval: 75.8% overall, P=3. Failure tally had lots of parse errors
+  (eof in formula, missing ), missing QED) → suspicious. Checked gold body token
+  counts: len-6 proofs need up to 154 tokens, len-5 up to 125; I was decoding
+  only 80 new tokens. 1,411 held-out gold proofs literally could not finish.
+  Raised max_new_tokens 80→176 (prompt+body stays < block_size 256). No retrain.
+- Re-eval (budget 176): **86.9%** overall (7493/8622), target met. Per length:
+  len2 0.982, len3 0.967, len4 0.851, len5 0.653, len6 0.599. P=4 (point) / P=3
+  (Wilson-LB, since len-4 LB 0.837 < 0.85). Failures now purely semantic
+  (ANDI 529, ORI1 206, ORI2 134 dominate). `verify_cli --reasons` agrees (86.9%).
+  Figure: figures/solve_by_length.png.
+
+### THE barrier: generator rule coverage (validation_36 cross-check)
+- Held-out is in-distribution. On the mentor's curated validation_36 (eval only,
+  never trained on): 2/36 overall — but 24/36 need >6 lines (Stage-2 territory,
+  OOD by the L=6 cap), so the honest number is the **≤6 bin: 2/12 = 16.7%**.
+- Big in-dist vs curated gap. Root cause found in the dataset rule histogram:
+  **R (reiteration) = 0**, NEGI = 8, ORE = 197, BOTE = 97, DN = 433, NEGE = 516,
+  IMPE = 836, while ORI1/ORI2/ANDI = 39k/39k/27k. The forward-random generator
+  over-samples "free" introduction rules (always applicable) and starves the
+  consuming / goal-directed rules that canonical theorems need:
+  - positive_paradox `Q ⊢ (P>Q)`, absorption: need R (reiteration) → impossible.
+  - modus_tollens, negative_paradox, consequentia_mirabilis: need goal-directed
+    NEGI/BOTE chains the generator underproduces.
+  - Also malformed output on OOD prompts (dn_intro dropped a paren; identity
+    emitted a garbage `N2 ;` line).
+- This is the non-obvious barrier: **coverage, not model size**. The model is
+  86.9% in-distribution and 16.7% on curated ≤6 because the training distribution
+  is narrow. Fixable by rebalancing the generator (add R; bias toward
+  consuming/discharging rules; richer NEGI/ORE beyond templates).
+
+<!-- decision point: finalize clean in-dist Phase 1 vs invest in generator rebalance + retrain before the one-shot test run -->
+
+
 
 
