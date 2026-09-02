@@ -142,7 +142,28 @@ Honest, dated, in-order. Dead ends included on purpose.
   is narrow. Fixable by rebalancing the generator (add R; bias toward
   consuming/discharging rules; richer NEGI/ORE beyond templates).
 
-<!-- decision point: finalize clean in-dist Phase 1 vs invest in generator rebalance + retrain before the one-shot test run -->
+### Generator rebalance (addressing the barrier)
+- Decision (user away; best judgment): fix the barrier rather than finalize a
+  narrow model. Kept the 86.9% model committed as a fallback; did NOT run the
+  one-shot test yet (must run on the final model).
+- Added 8 goal-directed template families, each a named-theorem schema checked ok
+  by hand vs verify.py and re-checked by verify_text: modus_ponens, modus_tollens,
+  hypothetical_syllogism, weakening (`B ⊢ (A>B)`, injects R), negative_paradox,
+  explosion, dn_intro, dn_elim. These inject the starved rules (R, IMPE, NEGE,
+  NEGI, BOTE). Strategy weights now favour templates.
+- Subtlety caught: after the first rebalance the POOL histogram was balanced but
+  the DEDUPED distinct-theorem histogram was still ORI-dominated (NEGI 192, R 182)
+  — atom-only templates collapse to a few theorems (and their canonical forms are
+  exactly the excluded validation set). Fix: give templates richer depth-1/2
+  formula args so each family yields many distinct theorems that survive dedup.
+- Regenerated (n=400k, seed 0): distinct rule histogram now
+  IMPE 14.7k, NEGE 9.5k, NEGI 3.2k, BOTE 6.0k, R 3.0k (were 2k/0.9k/8/0.4k/0).
+  78,082 dropped as validation matches (templates hit canonical theorems, all
+  excluded). 71,517 distinct theorems → train 62,883 / heldout 8,634; overlap 0,
+  leakage 0; check_dataset green; figures regenerated.
+- Retraining 6000 steps (harder, broader distribution warrants the upper bound).
+
+<!-- next: eval retrained model on held-out AND validation_36; expect the in-dist/curated gap to close; then one-shot test -->
 
 
 

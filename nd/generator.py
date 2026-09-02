@@ -257,18 +257,145 @@ def gen_ore(rng):
 
 
 # --------------------------------------------------------------------------- #
+# Goal-directed templates
+# --------------------------------------------------------------------------- #
+# The forward random walk over-produces the always-applicable introduction rules
+# (ORI/ANDI) and starves the consuming/discharging rules that canonical theorems
+# need (R, IMPE, NEGE, NEGI, BOTE). These parametric families inject exactly
+# those patterns -- each is a real named theorem schema, checked ok by hand
+# against verify.py and re-checked by verify_text at sample time. Formula args
+# are small (atoms or depth-1), so renaming-dedup keeps a diverse but finite set.
+
+def _small(rng):
+    """Template argument formulas. Mostly depth 1-2 (not just atoms) so each
+    template family yields MANY distinct theorems that survive dedup -- otherwise
+    the rare-but-important rules (NEGI, R, IMPE...) are underweighted in training
+    because atom-only templates collapse to a handful of theorems (and their
+    canonical atom forms are exactly the validation set, which is excluded)."""
+    for _ in range(5):
+        f = rand_formula(rng, rng.choice([0, 1, 1, 2, 2]), p_atom=0.45)
+        if size(f) <= 6:
+            return f
+    return ('atom', rng.choice(ATOMS))
+
+
+def gen_modus_ponens(rng):
+    A, B = _small(rng), _small(rng)
+    b = Builder()
+    p1, _ = b.add(0, ('imp', A, B), 'PR', [])
+    p2, _ = b.add(0, A, 'PR', [])
+    b.add(0, B, 'IMPE', [p1, p2])
+    return b.text([('imp', A, B), A], B)
+
+
+def gen_modus_tollens(rng):
+    A, B = _small(rng), _small(rng)
+    imp, nB, nA = ('imp', A, B), ('not', B), ('not', A)
+    b = Builder()
+    p1, _ = b.add(0, imp, 'PR', [])
+    p2, _ = b.add(0, nB, 'PR', [])
+    s, _ = b.add(1, A, 'AS', [])
+    e1, _ = b.add(1, B, 'IMPE', [p1, s])
+    e2, _ = b.add(1, BOT, 'NEGE', [e1, p2])       # positive B first, then ~B
+    b.add(0, nA, 'NEGI', [s, e2])
+    return b.text([imp, nB], nA)
+
+
+def gen_hypothetical_syllogism(rng):
+    A, B, C = _small(rng), _small(rng), _small(rng)
+    ab, bc, ac = ('imp', A, B), ('imp', B, C), ('imp', A, C)
+    b = Builder()
+    p1, _ = b.add(0, ab, 'PR', [])
+    p2, _ = b.add(0, bc, 'PR', [])
+    s, _ = b.add(1, A, 'AS', [])
+    e1, _ = b.add(1, B, 'IMPE', [p1, s])
+    e2, _ = b.add(1, C, 'IMPE', [p2, e1])
+    b.add(0, ac, 'IMPI', [s, e2])
+    return b.text([ab, bc], ac)
+
+
+def gen_weakening(rng):
+    """B |- ( A > B ): assume A, reiterate B (R), close. Injects R."""
+    A, B = _small(rng), _small(rng)
+    b = Builder()
+    p1, _ = b.add(0, B, 'PR', [])
+    s, _ = b.add(1, A, 'AS', [])
+    e, _ = b.add(1, B, 'R', [p1])                  # reiterate the outer premise
+    b.add(0, ('imp', A, B), 'IMPI', [s, e])
+    return b.text([B], ('imp', A, B))
+
+
+def gen_negative_paradox(rng):
+    """( ~ A ) |- ( A > B ): assume A, contradiction, ex falso B, close."""
+    A, B = _small(rng), _small(rng)
+    nA = ('not', A)
+    b = Builder()
+    p1, _ = b.add(0, nA, 'PR', [])
+    s, _ = b.add(1, A, 'AS', [])
+    e1, _ = b.add(1, BOT, 'NEGE', [s, p1])         # A first, then ~A
+    e2, _ = b.add(1, B, 'BOTE', [e1])
+    b.add(0, ('imp', A, B), 'IMPI', [s, e2])
+    return b.text([nA], ('imp', A, B))
+
+
+def gen_explosion(rng):
+    """( A & ( ~ A ) ) |- B."""
+    A, B = _small(rng), _small(rng)
+    conj = ('and', A, ('not', A))
+    b = Builder()
+    p1, _ = b.add(0, conj, 'PR', [])
+    n2, _ = b.add(0, A, 'ANDE1', [p1])
+    n3, _ = b.add(0, ('not', A), 'ANDE2', [p1])
+    n4, _ = b.add(0, BOT, 'NEGE', [n2, n3])
+    b.add(0, B, 'BOTE', [n4])
+    return b.text([conj], B)
+
+
+def gen_dn_intro(rng):
+    """A |- ( ~ ( ~ A ) )."""
+    A = _small(rng)
+    nA, nnA = ('not', A), ('not', ('not', A))
+    b = Builder()
+    p1, _ = b.add(0, A, 'PR', [])
+    s, _ = b.add(1, nA, 'AS', [])
+    e, _ = b.add(1, BOT, 'NEGE', [p1, s])          # A first, then ~A
+    b.add(0, nnA, 'NEGI', [s, e])
+    return b.text([A], nnA)
+
+
+def gen_dn_elim(rng):
+    """( ~ ( ~ A ) ) |- A."""
+    A = _small(rng)
+    nnA = ('not', ('not', A))
+    b = Builder()
+    p1, _ = b.add(0, nnA, 'PR', [])
+    b.add(0, A, 'DN', [p1])
+    return b.text([nnA], A)
+
+
+TEMPLATES = [gen_modus_ponens, gen_modus_tollens, gen_hypothetical_syllogism,
+             gen_weakening, gen_negative_paradox, gen_explosion, gen_dn_intro,
+             gen_dn_elim]
+
+
+def gen_template(rng):
+    return rng.choice(TEMPLATES)(rng)
+
+
+# --------------------------------------------------------------------------- #
 # Top-level sampling
 # --------------------------------------------------------------------------- #
-STRATEGIES = ['local', 'impi', 'negi', 'ore']
+STRATEGIES = ['local', 'impi', 'negi', 'ore', 'template']
 
 
-def sample_proof(rng, weights=(6, 3, 1, 1), long_bias=False):
+def sample_proof(rng, weights=(3, 2, 1, 1, 6), long_bias=False):
     """Draw one strategy, produce a candidate, verify it. Returns the accepted
     text or None. Length is checked to be in [2, 6].
 
+    Templates (goal-directed named-theorem schemas) get the most weight so the
+    rule distribution covers consuming/discharging rules, not just ORI/ANDI.
     long_bias raises the target length for local/impi so that, after pruning
-    collapses many short proofs, enough genuine length-5/6 proofs survive
-    (length 6 defines P, so it must be well represented)."""
+    collapses many short proofs, enough genuine length-5/6 proofs survive."""
     strat = rng.choices(STRATEGIES, weights=weights)[0]
     if strat == 'local':
         lo = 5 if long_bias else 2
@@ -278,8 +405,10 @@ def sample_proof(rng, weights=(6, 3, 1, 1), long_bias=False):
         text = gen_impi(rng, rng.randint(lo, 6))
     elif strat == 'negi':
         text = gen_negi(rng)
-    else:
+    elif strat == 'ore':
         text = gen_ore(rng)
+    else:
+        text = gen_template(rng)
     if text is None:
         return None
     ok, reason, nl = verify_text(text)
