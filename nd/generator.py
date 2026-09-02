@@ -262,14 +262,20 @@ def gen_ore(rng):
 STRATEGIES = ['local', 'impi', 'negi', 'ore']
 
 
-def sample_proof(rng, weights=(6, 3, 1, 1)):
+def sample_proof(rng, weights=(6, 3, 1, 1), long_bias=False):
     """Draw one strategy, produce a candidate, verify it. Returns the accepted
-    text or None. Length is checked to be in [2, 6]."""
+    text or None. Length is checked to be in [2, 6].
+
+    long_bias raises the target length for local/impi so that, after pruning
+    collapses many short proofs, enough genuine length-5/6 proofs survive
+    (length 6 defines P, so it must be well represented)."""
     strat = rng.choices(STRATEGIES, weights=weights)[0]
     if strat == 'local':
-        text = gen_local(rng, rng.randint(2, 6))
+        lo = 5 if long_bias else 2
+        text = gen_local(rng, rng.randint(lo, 6))
     elif strat == 'impi':
-        text = gen_impi(rng, rng.randint(3, 6))
+        lo = 5 if long_bias else 3
+        text = gen_impi(rng, rng.randint(lo, 6))
     elif strat == 'negi':
         text = gen_negi(rng)
     else:

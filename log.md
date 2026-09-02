@@ -49,5 +49,28 @@ Honest, dated, in-order. Dead ends included on purpose.
 - Cost: pruning collapses many proofs to length 2 → dataset builder must
   oversample + balance to keep enough genuine length-5/6 proofs (6 defines P).
 
-<!-- next: dataset build — dedup up-to-renaming, degenerate filter, theorem-disjoint split, stats/histograms -->
+### Dataset build (`nd/dataset.py`, `scripts/gen_data.py`, `scripts/check_dataset.py`)
+- Pipeline: sample pool → prune → drop degenerate → drop validation_36 matches →
+  dedup (shortest proof per prompt) → theorem-disjoint split.
+- Two theorem keys: `theorem_prompt_key` (renaming-invariant, order-sensitive) for
+  dedup of prompts; `theorem_split_key` (renaming- AND premise-order-invariant) for
+  the split, so a theorem can't leak across train/held-out via relabelling or
+  premise reorder. hashlib (not salted `hash()`) → reproducible split.
+- Long-bias sampling (half the attempts target length 5–6) to survive pruning
+  collapse, so length 6 (which defines P) is well represented.
+- Run (n=300k, seed 0, 48s CPU): pool 284,320; 62% were padded; dropped 4,133
+  degenerate + 25,984 validation-matching; 71,892 distinct theorems →
+  train 63,270 / held-out 8,622; overlap 0; leakage 0.
+  - Note: 25,984 dropped-as-validation is large but expected — a random generator
+    hits canonical short theorems (modus ponens, disj. syllogism = the val set)
+    constantly; all their renamings are excluded from training. Good, not a bug.
+- `check_dataset.py` (strict, the exam re-checks this): every train+held-out proof
+  verifies for its exact sequent, ≤6 lines, tight (emitted==effective),
+  prompt+proof==text, splits disjoint, no validation overlap. All green.
+- Figures (`scripts/make_figures.py`): length, rule-usage, premise-count,
+  emitted-vs-effective. Padding audit clearly shows emitted-5/6 proofs are mostly
+  effective-2/4 in the raw pool → justifies pruning.
+
+<!-- next: tokenizer, then model (4L d=256 ~3.3M) + training (needs torch/MPS) -->
+
 
