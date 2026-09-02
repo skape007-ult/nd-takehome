@@ -1,0 +1,6 @@
+# Runtime deps for training, eval, and prove.py.
+# prove.py must run on a T4-class GPU (or CPU) with only what is listed here.
+torch>=2.0
+numpy>=1.24
+# Figures only (not needed by prove.py):
+matplotlib>=3.6
