@@ -11,6 +11,12 @@ Asserts, for every record in data/train.jsonl and data/heldout.jsonl:
 and across the sets:
   * no theorem (up to renaming/premise-order) appears in both train and heldout,
   * no theorem matches validation_36.jsonl.
+
+CAVEAT on the tightness assertion: it is only as strong as `effective_length`,
+which resolves a cited subproof box to its whole index span. Dead lines INSIDE a
+box therefore pass this check. 7.5% of the shipped records are padded that way --
+run `scripts/audit_box_padding.py` for the real number. Tightness here means "no
+dead lines at depth 0", not "no dead lines".
 """
 import json, os, sys
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -46,7 +52,8 @@ def check_set(recs, name):
         assert nl == r['n_lines'] <= 6, f'{name}[{i}] length {nl} > 6 or mismatched'
         emitted, eff = lengths_from_text(text)
         assert emitted == eff, f'{name}[{i}] not tight: emitted {emitted} eff {eff}'
-    print(f'  {name}: {len(recs)} records, all verify, all <= 6 lines, all tight')
+    print(f'  {name}: {len(recs)} records, all verify, all <= 6 lines, '
+          'all tight at depth 0 (see audit_box_padding.py for box interiors)')
 
 
 def main():

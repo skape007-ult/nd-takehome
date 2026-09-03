@@ -33,6 +33,8 @@ Honest, dated, in-order. Dead ends included on purpose.
   ≤ 6 lines. Every candidate gated through `verify_text`.
 - Stress test (`tests/test_generator.py`, seed 0, 20k attempts): 90% yield, all
   18,022 accepted proofs re-verify, all 15 rules covered.
+  **[SUPERSEDED 2026-09-03: "all 15 rules covered" is false — R = 0. See the
+  corrections block at the end of this log.]**
   - Gotcha: my first rule-coverage counter over-counted `R` because the atom `R`
     renders as the bare token `R`, same as the R-rule name. The generator does not
     emit the (useless) R rule. Real stats count the parsed rule field instead.
@@ -46,6 +48,9 @@ Honest, dated, in-order. Dead ends included on purpose.
 - Validated on 13.5k generated proofs (seed 1): 57.7% tightened, 0 re-verify
   failures, 0 still-padded afterwards. Training proofs will be tight
   (emitted == effective), so length is an honest difficulty measure.
+  **[SUPERSEDED 2026-09-03: "0 still-padded" was measured with a metric that
+  cannot see inside subproof boxes; 7.5% of the shipped data is padded. See the
+  corrections block at the end of this log.]**
 - Cost: pruning collapses many proofs to length 2 → dataset builder must
   oversample + balance to keep enough genuine length-5/6 proofs (6 defines P).
 
@@ -196,3 +201,57 @@ Honest, dated, in-order. Dead ends included on purpose.
 
 
 
+
+---
+
+## 2026-09-03
+
+### Audit: dead lines INSIDE boxes survive pruning (`scripts/audit_box_padding.py`)
+- Hunch while writing up: `prune` treats a subproof box as one complete structure,
+  so does it ever look *inside* one? It does not. `_line_deps` resolves an
+  IMPI/NEGI box citation to the whole index span `s..e`, so every interior line
+  counts as reachable whether or not it feeds the box's end line. `prune` keeps
+  exactly the reachable set, sees `len(kept) == len(lines)`, and reports the proof
+  already tight.
+- Minimal pair, same dead ANDE2 line moved across the box boundary:
+  outside → emitted 5 / effective 4, pruned to 4 lines; inside → emitted 5 /
+  effective 5, `changed=False`. Caught at depth 0, invisible at depth 1.
+- Measured under STRICT box semantics (a box contributes its AS line, its end
+  line, and the end line's transitive citations):
+  - train: 4,738 / 13,336 boxed proofs padded (35.5%) = 7.5% of 63,270 examples.
+  - held-out: 650 / 8,622 (7.5%).
+  - Strict-pruned all 8,622 held-out proofs and re-verified: **0 failures**, so
+    the removed lines really were dead.
+- Concentrated exactly where P lives. Labelled 6 → true 3/4/5/6 = 35/151/129/106:
+  only **106 of 421** "length 6" held-out theorems genuinely need six lines.
+  Labelled 5 → 26.6% mislabelled. Lengths 2–4 clean.
+- Consequence for the headline: solve rate by TRUE length is
+  0.982 / 0.953 / 0.848 / 0.591 / 0.387 vs labelled 0.982 / 0.967 / 0.851 /
+  0.653 / 0.599. Length-6 was overstated by 21pp (~7× the 3pp noise floor).
+  At the 85% bar this tips **P from 4 to 3** (len-4 0.851 → 0.848). P was already
+  3 on the Wilson LB, so the honest headline is unchanged: **P = 3**.
+- The model has already learned the habit: 117 / 7,493 accepted proofs (1.6%)
+  contain dead interior lines; its accepted 6-line outputs drop 58 → 42 under
+  strict pruning. This is the Stage-2 reward hack, present before any RL.
+- Deliberately did NOT change `nd/effective_length.py` or `nd/prune.py`: the
+  shipped `data/` must stay byte-reproducible from commit 268e468. The audit is a
+  standalone script; the fix (`_line_deps` returns `[s, e]` / `[j, s1, e1, s2, e2]`
+  and lets the traversal follow the end line) is written up as future work.
+
+### Corrections to earlier entries
+- "all 15 rules covered" (2026-09-02, generator stress test) is **wrong** and was
+  wrong for the reason recorded right below it: the surface-token counter conflated
+  atom `R` with rule `R`. `R` is emitted 0 times — `'R'` is in `LOCAL_RULES` but
+  `_local_candidates` has no branch producing it. Confirmed over 37,882 accepted
+  proofs from a fresh pool: R = 0. `numbers.md` and `figures/hist_rules.png` fixed;
+  the figure now plots all 15 rules with explicit zeros so the hole is visible.
+- "0 still padded afterwards" (2026-09-02, pruning) was measured with the metric
+  that has the blind spot. Superseded by the audit above.
+
+### Writeup restructured
+- `writeup.md` rewritten from skeleton to full document: executive summary first
+  (426 words) with the three findings and three figures, then method, results,
+  limitations, what-I'd-do-next-week, conclusion, notes.
+- Added the one-shot test numbers to the summary (test_short 31.5%, test_long
+  1.5%), stated plainly that L − P is not measured because Stage 2 was not
+  attempted, and moved the AI-assistant disclosure into its own note.

@@ -16,7 +16,7 @@ import matplotlib.pyplot as plt
 
 HERE = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 FIG = os.path.join(HERE, 'figures')
-ACCENT, ACCENT2 = '#2f6fed', '#e8823a'
+ACCENT, ACCENT2, WARN = '#2f6fed', '#e8823a', '#c0392b'
 plt.rcParams.update({'figure.dpi': 130, 'axes.grid': True,
                      'grid.alpha': 0.25, 'axes.axisbelow': True,
                      'font.size': 11})
@@ -43,16 +43,40 @@ def fig_length(s):
     fig.tight_layout(); fig.savefig(os.path.join(FIG, 'hist_length.png')); plt.close(fig)
 
 
+ALL_RULES = ['PR', 'AS', 'ANDI', 'ANDE1', 'ANDE2', 'IMPI', 'IMPE', 'ORI1',
+             'ORI2', 'ORE', 'NEGI', 'NEGE', 'BOTE', 'DN', 'R']
+
+
 def fig_rules(s):
+    """Per-proof rule presence, log scale, over ALL 15 rules.
+
+    Plotted over the fixed rule list rather than over the keys present in the
+    histogram: a rule the generator never emits has no key, and omitting it is
+    exactly how `R = 0` stayed invisible. Zeros are drawn as a labelled stub so
+    the coverage hole is the first thing the figure shows.
+    """
     total = s['distinct_theorems']
-    items = sorted(s['rule_hist_all'].items(), key=lambda kv: -kv[1])
+    counts = {r: s['rule_hist_all'].get(r, 0) for r in ALL_RULES}
+    items = sorted(counts.items(), key=lambda kv: -kv[1])
     names = [k for k, _ in items]
     frac = [v / total for _, v in items]
-    fig, ax = plt.subplots(figsize=(7, 4))
-    ax.bar(names, frac, color=ACCENT)
-    ax.set_ylabel('fraction of proofs using rule')
-    ax.set_title('Stage-1 dataset: rule usage (per-proof presence)')
-    ax.set_ylim(0, 1)
+    starved = 0.02                       # < 2% of proofs = effectively unseen
+    colors = [ACCENT if f >= starved else WARN for f in frac]
+    fig, ax = plt.subplots(figsize=(7.6, 4.4))
+    floor = 2e-5
+    ax.bar(names, [max(f, floor) for f in frac], color=colors)
+    ax.set_yscale('log')
+    ax.set_ylim(floor, 2.0)
+    ax.axhline(starved, ls='--', lw=1.1, color=WARN)
+    ax.text(len(names) - 0.4, starved * 1.25, 'starved (<2% of proofs)',
+            ha='right', fontsize=9, color=WARN)
+    for i, (n, v) in enumerate(items):
+        if frac[i] < starved:
+            ax.text(i, max(frac[i], floor) * 1.9, '0' if v == 0 else str(v),
+                    ha='center', fontsize=8, color=WARN)
+    ax.set_ylabel('fraction of proofs using rule (log)')
+    ax.set_title('Stage-1 dataset: rule coverage over all 15 rules\n'
+                 'R is never generated; NEGI appears in 8 of 71,892 theorems')
     plt.setp(ax.get_xticklabels(), rotation=45, ha='right')
     fig.tight_layout(); fig.savefig(os.path.join(FIG, 'hist_rules.png')); plt.close(fig)
 
