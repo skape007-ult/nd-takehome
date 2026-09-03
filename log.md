@@ -163,7 +163,35 @@ Honest, dated, in-order. Dead ends included on purpose.
   leakage 0; check_dataset green; figures regenerated.
 - Retraining 6000 steps (harder, broader distribution warrants the upper bound).
 
-<!-- next: eval retrained model on held-out AND validation_36; expect the in-dist/curated gap to close; then one-shot test -->
+### DECISION: ship the 86.9% model as final Stage-1 (rebalance NOT used)
+- Call (user): ship the original 86.9% checkpoint as the final Stage-1 model;
+  do not use the rebalanced-generator retrain. Stopped that run mid-flight
+  (it was at ~step 1000, probe 0.215 — going the same way, not yet better).
+- Restored the exact pair the shipped model was trained on:
+  ckpt/stage1.pt and data/ (train 63,270 / heldout 8,622) from commit 3ff5fc4;
+  nd/generator.py from commit 268e468 (the generator that produced that data, so
+  `scripts/gen_data.py --n 300000 --seed 0` reproduces it exactly). check_dataset
+  green after restore.
+- Rebalanced work kept but quarantined: moved to nd/generator_templates.py with a
+  header stating it is NOT used for the final model; the story stays above in this
+  log. The active generator.py is template-free.
+
+### FINAL NUMBERS (shipped model ckpt/stage1.pt; greedy; deterministic)
+- Held-out (in-distribution): **86.9%** (7493/8622), 95% CI [0.862, 0.876].
+  By length: 0.982 / 0.967 / 0.851 / 0.653 / 0.599 for len 2..6.
+  **P = 4 (point) / 3 (Wilson-LB)**. Failures purely semantic (ANDI/ORI dominate).
+- validation_36 (eval only): 2/36 overall; ≤6 bin 2/12 = 16.7%; 24/36 need >6
+  lines (OOD by the L=6 cap → 0/24 expected).
+- Test leaderboard (ONE-SHOT, run once, no tuning): test_short 31.5% (84/267,
+  CI 26.2–37.3%); test_long 1.5% (8/532, CI 0.8–2.9%).
+- Coherent story: strong in-distribution; weaker on curated theorems (test_short
+  31.5%) due to the generator's narrow distribution (the diagnosed barrier: it
+  starves goal-directed rules); near-zero on >6-line proofs (test_long) because
+  the model is capped at 6 — the gap Stage-2 RL is meant to close. So the
+  pre-trained frontier P is 3–4 in-distribution and lower on curated theorems;
+  the honest headline is P≈3–4 with the coverage barrier identified (and a fix
+  prototyped in generator_templates.py, left for a controlled Stage-1 v2).
+
 
 
 

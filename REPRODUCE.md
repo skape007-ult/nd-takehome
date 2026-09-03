@@ -19,6 +19,12 @@ PYTHONPATH=. python3 scripts/make_figures.py       # figures/hist_*.png
 ```
 Outputs: `data/train.jsonl`, `data/heldout.jsonl`, `data/stats.json`.
 
+> The shipped `data/` and `ckpt/stage1.pt` are the exact pair the final model was
+> trained on, and both are committed — you do not need to regenerate to reproduce
+> the eval numbers. The command above reproduces the dataset with the template-free
+> `nd/generator.py`. `nd/generator_templates.py` is a later coverage-rebalance
+> exploration that was **NOT** used for the shipped model (see log.md).
+
 ## 2. Train Stage-1  (MPS ~50 min; T4 ~20 min)
 ```
 PYTHONPATH=. python3 nd/train.py --steps 4000 --batch 128 --warmup 200 \
